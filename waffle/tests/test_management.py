@@ -290,7 +290,7 @@ class WaffleDeleteManagementCommandTests(TestCase):
         call_command('waffle_delete', flag_names=[name])
         self.assertEqual(get_waffle_flag_model().objects.count(), 0)
 
-    def test_delete_swtich(self):
+    def test_delete_switch(self):
         """ The command should delete a switch. """
         name = 'test_switch'
         get_waffle_switch_model().objects.create(name=name)
@@ -329,3 +329,44 @@ class WaffleDeleteManagementCommandTests(TestCase):
 
         call_command('waffle_delete', flag_names=[flag_1])
         self.assertTrue(get_waffle_flag_model().objects.filter(name=flag_2).exists())
+
+
+class WaffleDeleteUnused(TestCase):
+    def test_delete_switches(self):
+        # we concat the strings so that the switch is not found in the code
+        get_waffle_switch_model().objects.create(name="FIRST" + "NEVER_FOUND" + "SWITCH", active=True)
+        get_waffle_switch_model().objects.create(name="SECOND" + "NEVER_FOUND" + "SWITCH", active=True)
+        # this test is in the search directory, so this very instance will be found
+        get_waffle_switch_model().objects.create(name="SWITCH_FOUND", active=True)
+        call_command('waffle_delete_unused', "--no-input", "--switches")
+        self.assertEqual(1, get_waffle_switch_model().objects.all().count())
+
+    def test_delete_samples(self):
+        # we concat the strings so that the switch is not found in the code
+        get_waffle_sample_model().objects.create(name="FIRST" + "NEVER_FOUND" + "SAMPLE", percent=0)
+        get_waffle_sample_model().objects.create(name="SECOND" + "NEVER_FOUND" + "SAMPLE", percent=0)
+        # this test is in the search directory, so this very instance will be found
+        get_waffle_sample_model().objects.create(name="SAMPLE_FOUND", percent=0)
+        call_command('waffle_delete_unused', "--no-input", "--samples")
+        self.assertEqual(1, get_waffle_sample_model().objects.all().count())
+
+    def test_delete_flags(self):
+        # we concat the strings so that the switch is not found in the code
+        get_waffle_flag_model().objects.create(name="FIRST" + "NEVER_FOUND" + "FLAG")
+        get_waffle_flag_model().objects.create(name="SECOND" + "NEVER_FOUND" + "FLAG")
+        # this test is in the search directory, so this very instance will be found
+        get_waffle_flag_model().objects.create(name="FLAG_FOUND")
+        call_command('waffle_delete_unused', "--no-input", "--flags")
+        self.assertEqual(1, get_waffle_flag_model().objects.all().count())
+
+    def test_deletion_confirmation(self):
+        from unittest import mock
+        mock.patch('builtins.input', side_effect=["N\n", "Y\n", "N\n"]).start()
+
+        get_waffle_switch_model().objects.create(name="FIRST" + "NEVER_FOUND" + "SWITCH", active=True)
+        get_waffle_sample_model().objects.create(name="FIRST" + "NEVER_FOUND" + "SAMPLE", percent=0)
+        get_waffle_flag_model().objects.create(name="FIRST" + "NEVER_FOUND" + "FLAG")
+        call_command('waffle_delete_unused', "--flags", "--samples", "--switches")
+        self.assertEqual(0, get_waffle_flag_model().objects.all().count())
+        self.assertEqual(1, get_waffle_sample_model().objects.all().count())
+        self.assertEqual(1, get_waffle_switch_model().objects.all().count())
