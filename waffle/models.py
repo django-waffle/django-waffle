@@ -233,6 +233,9 @@ class AbstractBaseFlag(BaseModel):
         if self.everyone:
             return True
 
+        if self.everyone is False:
+            return False
+
         if self.authenticated and user.is_authenticated:
             return True
 
@@ -396,7 +399,8 @@ class AbstractUserFlag(AbstractBaseFlag):
 
     def is_active_for_user(self, user: AbstractBaseUser) -> bool | None:
         is_active = super().is_active_for_user(user)
-        if is_active:
+
+        if is_active is True or is_active is False:
             return is_active
 
         user_ids = self._get_user_ids()
