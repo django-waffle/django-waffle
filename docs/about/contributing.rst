@@ -65,10 +65,10 @@ To be mergeable, patches must:
 - have a `good commit message`_.
 
 Regressions tests should fail without the rest of the patch and pass
-with it. 
+with it.
 
 
-.. _open a new issue: https://github.com/django-waffle/django-waffle/issues/new
-.. _Fork: https://github.com/django-waffle/django-waffle/fork
+.. _open a new issue: https://github.com/jazzband/django-waffle/issues/new
+.. _Fork: https://github.com/jazzband/django-waffle/fork
 .. _flake8: https://pypi.python.org/pypi/flake8
 .. _good commit message: http://tbaggery.com/2008/04/19/a-note-about-git-commit-messages.html

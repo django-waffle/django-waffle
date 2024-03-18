@@ -112,7 +112,7 @@ v0.16.0
 - Using strings as cache keys instead of bytes
 - Passing effects of test decorator to child classes
 -- NOTE: This introduced a backwards-incompatible change for the testutils override decorators.
-   See https://github.com/django-waffle/django-waffle/pull/331 for details.
+   See https://github.com/jazzband/django-waffle/pull/331 for details.
 
 v0.15.1
 =======
