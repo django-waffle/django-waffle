@@ -6,7 +6,7 @@ export DJANGO_SETTINGS_MODULE="test_settings"
 usage() {
     echo "USAGE: $0 [command]"
     echo "  test - run the waffle tests"
-    echo "  lint - run flake8"
+    echo "  lint - run ruff"
     echo "  typecheck - run mypy"
     echo "  shell - open the Django shell"
     echo "  makemigrations - create a schema migration"
@@ -20,7 +20,7 @@ case "$CMD" in
     "test" )
         DJANGO_SETTINGS_MODULE=test_settings django-admin test waffle $@ ;;
     "lint" )
-        flake8 waffle $@ ;;
+        ruff . ;;
     "typecheck" )
         mypy waffle $@ ;;
     "shell" )

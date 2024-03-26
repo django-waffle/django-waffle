@@ -10,7 +10,7 @@ except ImportError:
 
 # Make filepaths relative to settings.
 ROOT = os.path.dirname(os.path.abspath(__file__))
-path = lambda *a: os.path.join(ROOT, *a)
+path = lambda *a: os.path.join(ROOT, *a)  # noqa: E731
 
 DEBUG = True
 TEST_RUNNER = 'django.test.runner.DiscoverRunner'

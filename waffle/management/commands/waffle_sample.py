@@ -48,7 +48,7 @@ class Command(BaseCommand):
         try:
             percent = float(percent)
             if not (0.0 <= percent <= 100.0):
-                raise ValueError()
+                raise ValueError
         except ValueError:
             raise CommandError('You need to enter a valid percentage value.')
 
