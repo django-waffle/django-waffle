@@ -230,8 +230,9 @@ class AbstractBaseFlag(BaseModel):
         return flush_keys
 
     def is_active_for_user(self, user: AbstractBaseUser) -> bool | None:
-        if self.everyone:
-            return True
+        # According to the docs, everyone should override all the other settings
+        if self.everyone is not None:
+            return self.everyone
 
         if self.authenticated and user.is_authenticated:
             return True
