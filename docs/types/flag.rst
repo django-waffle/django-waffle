@@ -46,8 +46,11 @@ Flags can be administered through the Django `admin site`_ or the
 :name:
     The name of the flag. Will be used to identify the flag everywhere.
 :everyone:
-    Globally set the Flag, **overriding all other criteria**. Leave as
+    **INCORRECT:** Globally set the Flag, **overriding all other criteria**. Leave as
     *Unknown* to use other criteria.
+
+    **CORRECT:** Globally set the Flag when set to *Yes*, **overriding all other criteria**. Leave as
+    *Unknown* or *No* to use other criteria.
 :testing:
     Can the flag be specified via a querystring parameter? :ref:`See
     below <types-flag-testing>`.

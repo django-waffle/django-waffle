@@ -803,3 +803,110 @@ class FunctionTests(TestCase):
         response = process_request(request, views.flag_in_view_readonly)
         assert 'dwf_myflag' not in response.cookies
         self.assertEqual(b'off', response.content)
+
+
+class WaffleFlagEveryoneSettingTests(TestCase):
+    databases = DATABASES
+
+    def test_is_active_for_user_overrides_truthy_criteria_when_everyone_on(self):
+        """
+        Test flag.is_active_for_user returns truthy value when everyone is set to True overriding all other
+        settings resolving to True.
+        """
+        flag = waffle.get_waffle_flag_model().objects.create(
+            name="feature_flag_name",
+            staff=True,
+            everyone=True,
+        )
+        staff_user = get_user_model()(
+            id=999,
+            username="foo",
+            is_staff=True,
+        )
+        self.assertTrue(flag.is_active_for_user(staff_user))
+
+    def test_is_active_for_user_overrides_falsy_criteria_when_everyone_on(self):
+        """
+        Test flag.is_active_for_user returns truthy value when everyone is set to True overriding all other
+        settings resolving to False.
+        """
+        flag = waffle.get_waffle_flag_model().objects.create(
+            name="feature_flag_name",
+            staff=False,
+            everyone=True,
+        )
+        staff_user = get_user_model()(
+            id=999,
+            username="foo",
+            is_staff=True,
+        )
+        self.assertTrue(flag.is_active_for_user(staff_user))
+
+
+    def test_is_active_for_user_respects_truthy_criteria_when_everyone_off(self):
+        """
+        Test flag.is_active_for_user returns truthy value when everyone is set to False and all the other
+        settings resolving to True.
+        """
+        flag = waffle.get_waffle_flag_model().objects.create(
+            name="feature_flag_name",
+            staff=True,
+            everyone=False,
+        )
+        staff_user = get_user_model()(
+            id=999,
+            username="foo",
+            is_staff=True,
+        )
+        self.assertTrue(flag.is_active_for_user(staff_user))
+
+    def test_is_active_for_user_respects_falsy_criteria_when_everyone_off(self):
+        """
+        Test flag.is_active_for_user returns falsy value when everyone is set to False and all the other
+        settings resolving to False.
+        """
+        flag = waffle.get_waffle_flag_model().objects.create(
+            name="feature_flag_name",
+            staff=False,
+            everyone=False,
+        )
+        staff_user = get_user_model()(
+            id=999,
+            username="foo",
+            is_staff=True,
+        )
+        self.assertFalse(flag.is_active_for_user(staff_user))
+
+    def test_is_active_for_user_respects_truthy_criteria_when_everyone_unknown(self):
+        """
+        Test flag.is_active_for_user returns truthy value when everyone is set to None and all the other
+        settings resolving to True.
+        """
+        flag = waffle.get_waffle_flag_model().objects.create(
+            name="feature_flag_name",
+            staff=True,
+            everyone=None,
+        )
+        staff_user = get_user_model()(
+            id=999,
+            username="foo",
+            is_staff=True,
+        )
+        self.assertTrue(flag.is_active_for_user(staff_user))
+
+    def test_is_active_for_user_respects_falsy_criteria_when_everyone_unknown(self):
+        """
+        Test flag.is_active_for_user returns falsy value when everyone is set to None and all the other
+        settings resolving to False.
+        """
+        flag = waffle.get_waffle_flag_model().objects.create(
+            name="feature_flag_name",
+            staff=False,
+            everyone=None,
+        )
+        staff_user = get_user_model()(
+            id=999,
+            username="foo",
+            is_staff=True,
+        )
+        self.assertFalse(flag.is_active_for_user(staff_user))
