@@ -1,0 +1,225 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the PACKAGE package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: PACKAGE VERSION\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2020-08-18 11:43+0100\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"Language: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+#: admin.py:54
+msgid "Enable selected flags for everyone"
+msgstr "Povolit zvolené flagy pro všechny"
+
+#: admin.py:55
+msgid "Disable selected flags for everyone"
+msgstr "Zakázat zvolené flagy pro všechny"
+
+#: admin.py:56
+msgid "Delete selected"
+msgstr "Vymazat zvolené"
+
+#: admin.py:116
+msgid "Enable selected switches"
+msgstr "Povolit zvolené přepínače"
+
+#: admin.py:117
+msgid "Disable selected switches"
+msgstr "Zakázat zvolené přepínače"
+
+#: models.py:128 models.py:407 models.py:470
+msgid "The human/computer readable name."
+msgstr "Lidsky/počítačově čitelné jméno."
+
+#: models.py:129 models.py:408 models.py:471
+msgid "Name"
+msgstr "Jméno"
+
+#: models.py:135
+msgid ""
+"Flip this flag on (Yes) or off (No) for everyone, overriding all other "
+"settings. Leave as Unknown to use normally."
+msgstr ""
+"Prepnutí tohoto flagu na (Ano) nebo vypnout (Ne) pro všechny, přepíše "
+"všechna ostatní nastavení. Nechte jako Neznámé pro normální použití."
+
+#: models.py:137
+msgid "Everyone"
+msgstr "Všichni"
+
+#: models.py:144
+msgid ""
+"A number between 0.0 and 99.9 to indicate a percentage of users for whom "
+"this flag will be active."
+msgstr ""
+"Číslo mezi 0.0 a 99.9 pro označení procenta uživatelů, pro které "
+"bude tento flag aktivní."
+
+#: models.py:146 models.py:478
+msgid "Percent"
+msgstr "Procent"
+
+#: models.py:150
+msgid "Allow this flag to be set for a session for user testing"
+msgstr "Povolit tento flag pro nastavení relace pro testování uživatelů"
+
+#: models.py:151
+msgid "Testing"
+msgstr "Testování"
+
+#: models.py:155
+msgid "Flag always active for superusers?"
+msgstr "Flag vždy aktivní pro superuživatele?"
+
+#: models.py:156
+msgid "Superusers"
+msgstr "Superuživatelé"
+
+#: models.py:160
+msgid "Flag always active for staff?"
+msgstr "Flag vždy aktivní pro zaměstnance?"
+
+#: models.py:161
+msgid "Staff"
+msgstr "Zaměstnanci"
+
+#: models.py:165
+msgid "Flag always active for authenticated users?"
+msgstr "Flag vždy aktivní pro autentizované uživatele?"
+
+#: models.py:166
+msgid "Authenticated"
+msgstr "Autentizovaní"
+
+#: models.py:171
+msgid ""
+"Activate this flag for users with one of these languages (comma-separated "
+"list)"
+msgstr ""
+"Aktivovat tento flag pro uživatele s jedním z těchto jazyků (seznam oddělený "
+"čárkami)"
+
+#: models.py:172
+msgid "Languages"
+msgstr "Jazyky"
+
+#: models.py:176
+msgid "Activate roll-out mode?"
+msgstr "Aktivuje režim roll-out?"
+
+#: models.py:177
+msgid "Rollout"
+msgstr "Rollout"
+
+#: models.py:181
+msgid "Note where this Flag is used."
+msgstr "Poznámka, kde je tento flag použit."
+
+#: models.py:182 models.py:418 models.py:483
+msgid "Note"
+msgstr "Poznámka"
+
+#: models.py:187
+msgid "Date when this Flag was created."
+msgstr "Datum, kdy byl tento flag vytvořen."
+
+#: models.py:188 models.py:424 models.py:489
+msgid "Created"
+msgstr "Vytvořen"
+
+#: models.py:192
+msgid "Date when this Flag was last modified."
+msgstr "Datum, kdy byl tento flag naposledy upraven."
+
+#: models.py:193 models.py:429 models.py:494
+msgid "Modified"
+msgstr "Upraven"
+
+#: models.py:203 models.py:321 models.py:393
+msgid "Flag"
+msgstr "Flag"
+
+#: models.py:204 models.py:322 models.py:394
+msgid "Flags"
+msgstr "Flagy"
+
+#: models.py:309
+msgid "Activate this flag for these user groups."
+msgstr "Aktiuje tento flag pro tyto uživatelské skupiny."
+
+#: models.py:310
+msgid "Groups"
+msgstr "Skupiny"
+
+#: models.py:315
+msgid "Activate this flag for these users."
+msgstr "Aktivuje tento flag pro tyto uživatele."
+
+#: models.py:316
+msgid "Users"
+msgstr "Uživatelé"
+
+#: models.py:412
+msgid "Is this switch active?"
+msgstr "Je tento přepínač aktivní?"
+
+#: models.py:413
+msgid "Active"
+msgstr "Aktivní"
+
+#: models.py:417
+msgid "Note where this Switch is used."
+msgstr "Poznámka, kde je tento přepínač použit."
+
+#: models.py:423
+msgid "Date when this Switch was created."
+msgstr "Datum, kdy byl tento přepínač vytvořen."
+
+#: models.py:428
+msgid "Date when this Switch was last modified."
+msgstr "Datum, kdy byl tento přepínač naposledy upraven."
+
+#: models.py:438
+msgid "Switch"
+msgstr "Přepínač"
+
+#: models.py:439
+msgid "Switches"
+msgstr "Přepínače"
+
+#: models.py:476
+msgid ""
+"A number between 0.0 and 100.0 to indicate a percentage of the time this "
+"sample will be active."
+msgstr ""
+"Číslo mezi 0.0 a 100.0 pro označení procenta času, kdy bude tento vzorek aktivní."
+
+#: models.py:482
+msgid "Note where this Sample is used."
+msgstr "Poznámka, kde je tento vzorek použit."
+
+#: models.py:488
+msgid "Date when this Sample was created."
+msgstr "Datum, kdy byl tento vzorek vytvořen."
+
+#: models.py:493
+msgid "Date when this Sample was last modified."
+msgstr "Datum, kdy byl tento vzorek naposledy upraven."
+
+#: models.py:503
+msgid "Sample"
+msgstr "Vzorek"
+
+#: models.py:504
+msgid "Samples"
+msgstr "Vzorky"

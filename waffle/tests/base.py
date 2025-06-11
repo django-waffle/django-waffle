@@ -4,9 +4,9 @@ from django.core import cache
 
 class TestCase(test.TransactionTestCase):
 
-    def _pre_setup(self):
+    def setUp(self):
         cache.cache.clear()
-        super()._pre_setup()
+        super().setUp()
 
 
 class ReplicationRouter:

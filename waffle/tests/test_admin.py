@@ -38,6 +38,7 @@ skip_if_admin_permissions_not_available = \
 
 class FlagAdminTests(TestCase):
     def setUp(self):
+        super().setUp()
         self.site = AdminSite()
         self.flag_admin = FlagAdmin(Flag, self.site)
 
@@ -124,6 +125,7 @@ class FlagAdminTests(TestCase):
 
 class SwitchAdminTests(TestCase):
     def setUp(self):
+        super().setUp()
         self.site = AdminSite()
         self.switch_admin = SwitchAdmin(Switch, self.site)
 

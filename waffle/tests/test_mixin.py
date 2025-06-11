@@ -25,6 +25,7 @@ def process_request(request, view):
 
 class WaffleFlagMixinTest(TestCase):
     def setUp(self):
+        super().setUp()
         self.request = get()
 
     def test_flag_must_be_active(self):
@@ -54,6 +55,7 @@ class WaffleFlagMixinTest(TestCase):
 
 class WaffleSampleMixinTest(TestCase):
     def setUp(self):
+        super().setUp()
         self.request = get()
 
     def test_sample_must_be_active(self):
@@ -81,6 +83,7 @@ class WaffleSampleMixinTest(TestCase):
 
 class WaffleSwitchMixinTest(TestCase):
     def setUp(self):
+        super().setUp()
         self.request = get()
 
     def test_switch_must_be_active(self):
