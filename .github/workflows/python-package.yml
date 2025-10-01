@@ -22,7 +22,7 @@ jobs:
     steps:
       - uses: actions/checkout@v5
       - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         with:
           python-version: ${{ matrix.python-version }}
       - uses: actions/cache@v4
@@ -45,7 +45,7 @@ jobs:
 
     steps:
       - uses: actions/checkout@v5
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v6
       - uses: actions/cache@v4
         with:
           path: ~/.cache/pip
@@ -65,7 +65,7 @@ jobs:
 
     steps:
       - uses: actions/checkout@v5
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v6
       - uses: actions/cache@v4
         with:
           path: ~/.cache/pip
@@ -86,7 +86,7 @@ jobs:
 
     steps:
       - uses: actions/checkout@v5
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v6
       - uses: actions/cache@v4
         with:
           path: ~/.cache/pip
@@ -110,7 +110,7 @@ jobs:
 
     steps:
       - uses: actions/checkout@v5
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v6
       - uses: actions/cache@v4
         with:
           path: ~/.cache/pip
@@ -132,7 +132,7 @@ jobs:
     steps:
       - uses: actions/checkout@v5
       - name: Set up Python 3.13
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         with:
           python-version: 3.13
       - name: Install dependencies
@@ -164,7 +164,7 @@ jobs:
 
     steps:
       - uses: actions/checkout@v5
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v6
       - uses: casperdcl/deploy-pypi@v2
         with:
           password: ${{ secrets.PYPI_API_TOKEN }}
