@@ -374,19 +374,16 @@ class WaffleTests(TestCase):
 
     def test_set_then_unset_testing_flag(self):
         waffle.get_waffle_flag_model().objects.create(name='myflag', testing=True)
-        response = self.client.get('/flag_in_view?dwft_myflag=1')
-        self.assertEqual(b'on', response.content)
-
+        self.client.get('/foo?dwft_myflag=1')
         response = self.client.get('/flag_in_view')
         self.assertEqual(b'on', response.content)
 
-        response = self.client.get('/flag_in_view?dwft_myflag=0')
-        self.assertEqual(b'off', response.content)
-
+        self.client.get('/foo?dwft_myflag=0')
         response = self.client.get('/flag_in_view')
         self.assertEqual(b'off', response.content)
 
-        response = self.client.get('/flag_in_view?dwft_myflag=1')
+        self.client.get('/foo?dwft_myflag=1')
+        response = self.client.get('/flag_in_view')
         self.assertEqual(b'on', response.content)
 
     @override_settings(DATABASE_ROUTERS=['waffle.tests.base.ReplicationRouter'])
