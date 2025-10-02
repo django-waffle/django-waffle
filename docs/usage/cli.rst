@@ -81,3 +81,14 @@ Use ``manage.py`` to delete a batch of flags, switches, and/or samples::
     $ ./manage.py waffle_delete --switches switch_name_0 switch_name_1 --flags flag_name_0 flag_name_1 --samples sample_name_0 sample_name_1
 
 Pass a list of switch, flag, or sample names to the command as keyword arguments and they will be deleted from the database.
+
+Deleting Unused Data
+====================
+
+Use ``manage.py`` to delete all flags, switches, and/or samples that are not used in any flag, switch, or sample objects::
+
+    $ ./manage.py waffle_delete_unused --switches --flags --samples
+
+To by pass the confirmation prompt, use the ``--noinput`` flag::
+
+    $ ./manage.py waffle_delete_unused --switches --flags --samples --no-input
