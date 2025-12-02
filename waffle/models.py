@@ -401,7 +401,7 @@ class AbstractUserFlag(AbstractBaseFlag):
 
     def is_active_for_user(self, user: AbstractBaseUser) -> bool | None:
         is_active = super().is_active_for_user(user)
-        if is_active:
+        if is_active is not None:
             return is_active
 
         user_ids = self._get_user_ids()
