@@ -7,6 +7,7 @@ from django.contrib.admin.sites import AdminSite
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Permission
 from django.test.utils import override_settings
+from django.utils.html import escape
 from waffle import get_waffle_flag_model
 from waffle.admin import (FlagAdmin, SwitchAdmin, InformativeManyToManyRawIdWidget, enable_for_all,
                           disable_for_all, delete_individually, enable_switches, disable_switches)
@@ -53,6 +54,15 @@ class FlagAdminTests(TestCase):
         user2 = get_user_model().objects.create(username="test2")
         self.assertIn("(test1, test2)",
                       user_widget.render("users", [user1.pk, user2.pk]))
+
+        invalid_pk = "not a number"
+        self.assertIn(escape("(test1, <missing>, test2)"),
+                      user_widget.render("users", [user1.pk, invalid_pk, user2.pk]))
+
+        non_existing_pk = user2.pk + 1
+        self.assertIn(escape("(test1, <missing>, test2)"),
+                      user_widget.render("users", [user1.pk, non_existing_pk, user2.pk]))
+
 
     def test_enable_for_all(self):
         f1 = Flag.objects.create(name="flag1", everyone=False)
