@@ -14,15 +14,27 @@ class Migration(migrations.Migration):
     operations = [
         migrations.AlterModelOptions(
             name='flag',
-            options={'verbose_name': 'Flag', 'verbose_name_plural': 'Flags'},
+            options={
+                'verbose_name': 'Flag',
+                'verbose_name_plural': 'Flags',
+                'swappable': 'WAFFLE_FLAG_MODEL',
+            },
         ),
         migrations.AlterModelOptions(
             name='sample',
-            options={'verbose_name': 'Sample', 'verbose_name_plural': 'Samples'},
+            options={
+                'verbose_name': 'Sample',
+                'verbose_name_plural': 'Samples',
+                'swappable': 'WAFFLE_SAMPLE_MODEL',
+            },
         ),
         migrations.AlterModelOptions(
             name='switch',
-            options={'verbose_name': 'Switch', 'verbose_name_plural': 'Switches'},
+            options={
+                'verbose_name': 'Switch',
+                'verbose_name_plural': 'Switches',
+                'swappable': 'WAFFLE_SWITCH_MODEL',
+            },
         ),
         migrations.AlterField(
             model_name='flag',
