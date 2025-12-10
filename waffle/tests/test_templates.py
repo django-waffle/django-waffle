@@ -9,6 +9,7 @@ from django.test import RequestFactory
 from test_app import views
 from waffle.middleware import WaffleMiddleware
 from waffle.tests.base import TestCase
+from waffle.testutils import override_switch, override_flag, override_sample
 
 
 def get():
@@ -37,6 +38,26 @@ class WaffleTemplateTests(TestCase):
         self.assertContains(response, 'switch_var off')
         self.assertContains(response, 'sample_var')
         self.assertContains(response, 'window.waffle =')
+        self.assertContains(response, 'flag_is_active off')
+        self.assertContains(response, 'switch_is_active off')
+        self.assertContains(response, 'sample_is_active off')
+
+    @override_flag("flag", active=True)
+    @override_sample("sample", active=True)
+    @override_switch("switch", active=True)
+    def test_django_tags_enabled(self):
+        request = get()
+        response = process_request(request, views.flag_in_django)
+        self.assertContains(response, 'flag on')
+        self.assertContains(response, 'switch on')
+        self.assertContains(response, 'sample on')
+        self.assertNotContains(response, 'flag off')
+        self.assertNotContains(response, 'switch off')
+        self.assertNotContains(response, 'sample off')
+        self.assertContains(response, 'window.waffle =')
+        self.assertContains(response, 'flag_is_active on')
+        self.assertContains(response, 'switch_is_active on')
+        self.assertContains(response, 'sample_is_active on')
 
     def test_get_nodes_by_type(self):
         """WaffleNode.get_nodes_by_type() should find all child nodes."""

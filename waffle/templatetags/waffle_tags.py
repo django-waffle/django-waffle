@@ -1,7 +1,13 @@
+from typing import Optional
 from django import template
+from django.http import HttpRequest
 from django.template.base import VariableDoesNotExist
 
-from waffle import flag_is_active, sample_is_active, switch_is_active
+from waffle import (
+    flag_is_active as waffle_flag_is_active,
+    sample_is_active as waffle_sample_is_active,
+    switch_is_active as waffle_switch_is_active
+    )
 from waffle.views import _generate_waffle_js
 
 
@@ -60,17 +66,17 @@ class WaffleNode(template.Node):
 
 @register.tag
 def flag(parser, token):
-    return WaffleNode.handle_token(parser, token, 'flag', flag_is_active)
+    return WaffleNode.handle_token(parser, token, 'flag', waffle_flag_is_active)
 
 
 @register.tag
 def switch(parser, token):
-    return WaffleNode.handle_token(parser, token, 'switch', lambda request, name: switch_is_active(name))
+    return WaffleNode.handle_token(parser, token, 'switch', lambda request, name: waffle_switch_is_active(name))
 
 
 @register.tag
 def sample(parser, token):
-    return WaffleNode.handle_token(parser, token, 'sample', lambda request, name: sample_is_active(name))
+    return WaffleNode.handle_token(parser, token, 'sample', lambda request, name: waffle_sample_is_active(name))
 
 
 class InlineWaffleJSNode(template.Node):
@@ -81,3 +87,32 @@ class InlineWaffleJSNode(template.Node):
 @register.tag
 def wafflejs(parser, token):
     return InlineWaffleJSNode()
+
+
+@register.filter(name="switch_is_active")  # type: ignore[misc]
+def switch_is_active(switch_name: str) -> bool:
+    """
+    This template filter works like the switch tag, but you can use it within
+    if statement conditions in Django templates. Example: `{% if "switch_name"|switch_is_active %}`.
+    """
+    return waffle_switch_is_active(switch_name)
+
+
+@register.simple_tag  # type: ignore[misc]
+def flag_is_active(flag_name: str, request: HttpRequest, read_only: bool = False) -> Optional[bool]:
+    """
+    This template filter works like the flag tag, but you can use it within
+    if statement conditions in Django templates. Example:
+    `{% flag_is_active "flag_name" request True as is_flag_active %}`
+    `{% if is_flag_active %}`.
+    """
+    return waffle_flag_is_active(request=request, flag_name=flag_name, read_only=read_only)
+
+
+@register.filter(name="sample_is_active")  # type: ignore[misc]
+def sample_is_active(sample_name: str) -> bool:
+    """
+    This template filter works like the sample tag, but you can use it within if
+    statement conditions in Django templates. Example: `{% if "sample_name"|sample_is_active %}`.
+    """
+    return waffle_sample_is_active(sample_name)
