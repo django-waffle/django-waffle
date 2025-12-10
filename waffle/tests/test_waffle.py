@@ -291,11 +291,22 @@ class WaffleTests(TestCase):
         self.assertEqual(b'off', response.content)
         assert 'dwf_myflag' not in response.cookies
 
-    def test_percent(self):
-        """If you have no cookie, you get a cookie!"""
+    @mock.patch.object(random, 'uniform')
+    def test_percent(self, uniform):
+        """Test the 'percent' switch uses a random percent to decide on/off and sets cookie."""
+        # < 50. Flag is True.
         waffle.get_waffle_flag_model().objects.create(name='myflag', percent='50.0')
         request = get()
+        uniform.return_value = '10'
         response = process_request(request, views.flag_in_view)
+        self.assertEqual(b'on', response.content)
+        assert 'dwf_myflag' in response.cookies
+
+        # > 50. Flag is False.
+        request = get() # Fresh request
+        uniform.return_value = '80'
+        response = process_request(request, views.flag_in_view)
+        self.assertEqual(b'off', response.content)
         assert 'dwf_myflag' in response.cookies
 
     @mock.patch.object(random, 'uniform')
@@ -839,3 +850,12 @@ class WaffleFlagEveryoneSettingTests(TestCase):
             is_staff=True,
         )
         self.assertFalse(flag.is_active_for_user(staff_user))
+
+    def test_is_active_for_user_respects_everyone_off_for_targeted_users(self):
+        """
+        Test flag.is_active_for_user returns False when everyone is set to False even if users or groups are targeted.
+        """
+        user = get_user_model().objects.create(username='foo')
+        flag = waffle.get_waffle_flag_model().objects.create(name='feature_flag_name', everyone=False)
+        flag.users.add(user)
+        self.assertFalse(flag.is_active_for_user(user))
