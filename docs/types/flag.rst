@@ -55,18 +55,18 @@ Flags can be administered through the Django `admin site`_ or the
     A percentage of users for whom the flag will be active, if no other
     criteria applies to them.
 :superusers:
-    Is this flag always active for superusers?
+    Is this flag active for superusers?
 :staff:
-    Is this flag always active for staff?
+    Is this flag active for staff?
 :authenticated:
-    Is this flag always active for authenticated users?
+    Is this flag active for authenticated users?
 :languages:
     Is the ``LANGUAGE_CODE`` of the request in this list?
     (Comma-separated values.)
 :groups:
-    A list of group IDs for which this flag will always be active.
+    A list of group IDs for which this flag is active.
 :users:
-    A list of user IDs for which this flag will always be active.
+    A list of user IDs for which this flag is active.
 :rollout:
     Activate Rollout mode? :ref:`See below <types-flag-rollout>`.
 :note:
