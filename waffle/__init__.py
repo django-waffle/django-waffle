@@ -11,7 +11,7 @@ from django.apps import apps as django_apps
 if TYPE_CHECKING:
     from waffle.models import AbstractBaseFlag, AbstractBaseSample, AbstractBaseSwitch
 
-__version__ = '4.2.0'
+__version__ = '5.0.0'
 
 
 def flag_is_active(request: HttpRequest, flag_name: str, read_only: bool = False) -> bool | None:

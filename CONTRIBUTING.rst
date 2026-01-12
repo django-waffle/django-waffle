@@ -5,14 +5,6 @@
 Contributing to Waffle
 ======================
 
-.. image:: https://jazzband.co/static/img/jazzband.svg
-   :target: https://jazzband.co/
-   :alt: Jazzband
-
-This is a `Jazzband <https://jazzband.co>`_ project. By contributing you agree to abide by the
-`Contributor Code of Conduct <https://jazzband.co/about/conduct>`_ and follow the
-`guidelines <https://jazzband.co/about/guidelines>`_.
-
 Waffle is pretty simple to hack, and has a decent test suite! Here's how
 to patch Waffle, add tests, run them, and contribute changes.
 
@@ -78,8 +70,8 @@ Regressions tests should fail without the rest of the patch and pass
 with it.
 
 
-.. _open a new issue: https://github.com/jazzband/django-waffle/issues/new
-.. _Fork: https://github.com/jazzband/django-waffle/fork
+.. _open a new issue: https://github.com/django-waffle/django-waffle/issues/new
+.. _Fork: https://github.com/django-waffle/django-waffle/fork
 .. _ruff: https://pypi.python.org/pypi/ruff
 .. _mypy: https://www.mypy-lang.org/
 .. _good commit message: http://tbaggery.com/2008/04/19/a-note-about-git-commit-messages.html

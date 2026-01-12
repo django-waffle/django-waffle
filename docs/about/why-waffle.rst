@@ -34,5 +34,5 @@ here, let us know or add yourself in a pull request!)
 
 .. _Feature flags: http://code.flickr.net/2009/12/02/flipping-out/
 .. _several options: https://www.djangopackages.com/grids/g/feature-flip/
-.. _active community: https://github.com/jazzband/django-waffle/graphs/contributors
-.. _fairly steady updates: https://github.com/jazzband/django-waffle/pulse/monthly
+.. _active community: https://github.com/django-waffle/django-waffle/graphs/contributors
+.. _fairly steady updates: https://github.com/django-waffle/django-waffle/pulse/monthly

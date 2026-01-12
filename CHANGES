@@ -2,6 +2,17 @@
 Waffle Changelog
 ================
 
+v5.0.0
+======
+- Updated documentation
+- Dropped support for Django 3.2, 4.0, and 4.1
+- Updated test suite for Django 5.x
+- Added Czech translations
+- Extracted percent evaluation to separate function for custom models
+- Added support for Django 5.2
+- Dropped support for Python 3.8
+- [BREAKING] Corrected behavior of flag.everyone
+
 v4.2.0
 ======
 - Joined Jazzband (https://jazzband.co/)

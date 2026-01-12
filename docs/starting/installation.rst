@@ -21,7 +21,7 @@ Waffle is also available `on GitHub`_. In general, ``master`` should be
 stable, but use caution depending on unreleased versions.
 
 .. _hosted on PyPI: http://pypi.python.org/pypi/django-waffle
-.. _on GitHub: https://github.com/jazzband/django-waffle
+.. _on GitHub: https://github.com/django-waffle/django-waffle
 
 
 .. _installation-settings:

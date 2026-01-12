@@ -7,4 +7,4 @@ class WaffleConfig(AppConfig):
     default_auto_field = 'django.db.models.AutoField'
 
     def ready(self) -> None:
-        import waffle.signals  # noqa: F401
+        import waffle.signals  # noqa: F401,PLC0415

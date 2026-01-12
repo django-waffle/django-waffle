@@ -6,7 +6,7 @@ from waffle.utils import get_setting, get_cache
 
 
 if TYPE_CHECKING:
-    from waffle.models import _BaseModelType, AbstractBaseFlag, AbstractBaseSample, AbstractBaseSwitch  # noqa: F401
+    from waffle.models import _BaseModelType, AbstractBaseFlag, AbstractBaseSample, AbstractBaseSwitch  # noqa: F401,PLC0415
 else:
     _BaseModelType = TypeVar("_BaseModelType")
 
