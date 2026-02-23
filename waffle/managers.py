@@ -2,6 +2,7 @@ from typing import TYPE_CHECKING, Any, Generic, TypeVar
 
 from django.db import models
 
+from waffle.cache import cache_delete
 from waffle.utils import get_setting, get_cache
 
 
@@ -21,7 +22,7 @@ class BaseManager(models.Manager, Generic[_BaseModelType]):
         cache = get_cache()
         ret = super().create(*args, **kwargs)
         cache_key = get_setting(self.KEY_SETTING)
-        cache.delete(cache_key)
+        cache_delete(cache, cache_key)
         return ret
 
 
