@@ -14,18 +14,18 @@ if TYPE_CHECKING:
 __version__ = '5.0.0'
 
 
-def flag_is_active(request: HttpRequest, flag_name: str, read_only: bool = False) -> bool | None:
-    flag = get_waffle_flag_model().get(flag_name)
+def flag_is_active(request: HttpRequest, flag_name: str, read_only: bool = False, cache_retries: int | None = None) -> bool | None:
+    flag = get_waffle_flag_model().get(flag_name, cache_retries=cache_retries)
     return flag.is_active(request, read_only=read_only)
 
 
-def switch_is_active(switch_name: str) -> bool:
-    switch = get_waffle_switch_model().get(switch_name)
+def switch_is_active(switch_name: str, cache_retries: int | None = None) -> bool:
+    switch = get_waffle_switch_model().get(switch_name, cache_retries=cache_retries)
     return switch.is_active()
 
 
-def sample_is_active(sample_name: str) -> bool:
-    sample = get_waffle_sample_model().get(sample_name)
+def sample_is_active(sample_name: str, cache_retries: int | None = None) -> bool:
+    sample = get_waffle_sample_model().get(sample_name, cache_retries=cache_retries)
     return sample.is_active()
 
 

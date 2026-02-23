@@ -18,7 +18,10 @@ from waffle import (
     get_waffle_flag_model,
     managers,
 )
-from waffle.utils import get_setting, keyfmt, get_cache
+from waffle.utils import (
+    get_setting, keyfmt, get_cache,
+    cache_get, cache_set, cache_add, cache_delete_many,
+)
 
 logger = logging.getLogger('waffle')
 
@@ -46,10 +49,10 @@ class BaseModel(models.Model):
         return keyfmt(get_setting(cls.SINGLE_CACHE_KEY), name)
 
     @classmethod
-    def get(cls: type[_BaseModelType], name: str) -> _BaseModelType:
+    def get(cls: type[_BaseModelType], name: str, cache_retries: int | None = None) -> _BaseModelType:
         cache = get_cache()
         cache_key = cls._cache_key(name)
-        cached = cache.get(cache_key)
+        cached = cache_get(cache, cache_key, retries=cache_retries)
         if cached == CACHE_EMPTY:
             return cls(name=name)
         if cached:
@@ -58,10 +61,10 @@ class BaseModel(models.Model):
         try:
             obj = cls.get_from_db(name)
         except cls.DoesNotExist:
-            cache.add(cache_key, CACHE_EMPTY)
+            cache_add(cache, cache_key, CACHE_EMPTY, retries=cache_retries)
             return cls(name=name)
 
-        cache.add(cache_key, obj)
+        cache_add(cache, cache_key, obj, retries=cache_retries)
         return obj
 
     @classmethod
@@ -72,10 +75,10 @@ class BaseModel(models.Model):
         return objects.get(name=name)
 
     @classmethod
-    def get_all(cls: type[_BaseModelType]) -> list[_BaseModelType]:
+    def get_all(cls: type[_BaseModelType], cache_retries: int | None = None) -> list[_BaseModelType]:
         cache = get_cache()
         cache_key = get_setting(cls.ALL_CACHE_KEY)
-        cached = cache.get(cache_key)
+        cached = cache_get(cache, cache_key, retries=cache_retries)
         if cached == CACHE_EMPTY:
             return []
         if cached:
@@ -83,10 +86,10 @@ class BaseModel(models.Model):
 
         objs = cls.get_all_from_db()
         if not objs:
-            cache.add(cache_key, CACHE_EMPTY)
+            cache_add(cache, cache_key, CACHE_EMPTY, retries=cache_retries)
             return []
 
-        cache.add(cache_key, objs)
+        cache_add(cache, cache_key, objs, retries=cache_retries)
         return objs
 
     @classmethod
@@ -102,7 +105,7 @@ class BaseModel(models.Model):
             self._cache_key(self.name),
             get_setting(self.ALL_CACHE_KEY),
         ]
-        cache.delete_many(keys)
+        cache_delete_many(cache, keys)
 
     def save(self, *args: Any, **kwargs: Any) -> None:
         self.modified = timezone.now()
@@ -219,7 +222,7 @@ class AbstractBaseFlag(BaseModel):
     def flush(self) -> None:
         cache = get_cache()
         keys = self.get_flush_keys()
-        cache.delete_many(keys)
+        cache_delete_many(cache, keys)
 
     def get_flush_keys(self, flush_keys: list[str] | None = None) -> list[str]:
         flush_keys = flush_keys or []
@@ -294,7 +297,7 @@ class AbstractBaseFlag(BaseModel):
                     }
                 )
                 cache = get_cache()
-                cache.set(self._cache_key(self.name), flag)
+                cache_set(cache, self._cache_key(self.name), flag)
 
             return get_setting('FLAG_DEFAULT')
 
@@ -368,7 +371,7 @@ class AbstractUserFlag(AbstractBaseFlag):
     def _get_user_ids(self) -> set[Any]:
         cache = get_cache()
         cache_key = keyfmt(get_setting('FLAG_USERS_CACHE_KEY'), self.name)
-        cached = cache.get(cache_key)
+        cached = cache_get(cache, cache_key)
         if cached == CACHE_EMPTY:
             return set()
         if cached:
@@ -376,16 +379,16 @@ class AbstractUserFlag(AbstractBaseFlag):
 
         user_ids = set(self.users.all().values_list('pk', flat=True))
         if not user_ids:
-            cache.add(cache_key, CACHE_EMPTY)
+            cache_add(cache, cache_key, CACHE_EMPTY)
             return set()
 
-        cache.add(cache_key, user_ids)
+        cache_add(cache, cache_key, user_ids)
         return user_ids
 
     def _get_group_ids(self) -> set[Any]:
         cache = get_cache()
         cache_key = keyfmt(get_setting('FLAG_GROUPS_CACHE_KEY'), self.name)
-        cached = cache.get(cache_key)
+        cached = cache_get(cache, cache_key)
         if cached == CACHE_EMPTY:
             return set()
         if cached:
@@ -393,10 +396,10 @@ class AbstractUserFlag(AbstractBaseFlag):
 
         group_ids = set(self.groups.all().values_list('pk', flat=True))
         if not group_ids:
-            cache.add(cache_key, CACHE_EMPTY)
+            cache_add(cache, cache_key, CACHE_EMPTY)
             return set()
 
-        cache.add(cache_key, group_ids)
+        cache_add(cache, cache_key, group_ids)
         return group_ids
 
     def is_active_for_user(self, user: AbstractBaseUser) -> bool | None:
@@ -485,7 +488,7 @@ class AbstractBaseSwitch(BaseModel):
                     name=self.name, defaults={"active": get_setting("SWITCH_DEFAULT")}
                 )
                 cache = get_cache()
-                cache.set(self._cache_key(self.name), switch)
+                cache_set(cache, self._cache_key(self.name), switch)
 
             return get_setting('SWITCH_DEFAULT')
 
@@ -553,7 +556,7 @@ class AbstractBaseSample(BaseModel):
                     name=self.name, defaults={"percent": default_percent}
                 )
                 cache = get_cache()
-                cache.set(self._cache_key(self.name), sample)
+                cache_set(cache, self._cache_key(self.name), sample)
 
             return get_setting('SAMPLE_DEFAULT')
         return Decimal(str(random.uniform(0, 100))) <= self.percent
