@@ -18,10 +18,8 @@ from waffle import (
     get_waffle_flag_model,
     managers,
 )
-from waffle.utils import (
-    get_setting, keyfmt, get_cache,
-    cache_get, cache_set, cache_add, cache_delete_many,
-)
+from waffle.cache import cache_get, cache_set, cache_add, cache_delete_many
+from waffle.utils import get_setting, keyfmt, get_cache
 
 logger = logging.getLogger('waffle')
 

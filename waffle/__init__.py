@@ -14,7 +14,9 @@ if TYPE_CHECKING:
 __version__ = '5.0.0'
 
 
-def flag_is_active(request: HttpRequest, flag_name: str, read_only: bool = False, cache_retries: int | None = None) -> bool | None:
+def flag_is_active(
+    request: HttpRequest, flag_name: str, read_only: bool = False, cache_retries: int | None = None,
+) -> bool | None:
     flag = get_waffle_flag_model().get(flag_name, cache_retries=cache_retries)
     return flag.is_active(request, read_only=read_only)
 

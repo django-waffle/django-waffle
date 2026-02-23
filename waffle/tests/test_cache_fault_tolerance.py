@@ -6,6 +6,7 @@ from django.test import RequestFactory, override_settings
 import waffle
 from waffle.models import Flag, Switch, Sample
 from waffle.tests.base import TestCase
+from waffle.cache import cache_set
 
 
 def get(**kw):
@@ -123,7 +124,7 @@ class CacheRetryTests(TestCase):
             cache = mock_get_cache.return_value
             cache.get.side_effect = TimeoutError('cache down')
             cache.add.side_effect = TimeoutError('cache down')
-            flag = Flag.get(name='retry-flag', cache_retries=3)
+            Flag.get(name='retry-flag', cache_retries=3)
         # 1 initial + 3 retries = 4 attempts
         assert cache.get.call_count == 4
 
@@ -187,7 +188,6 @@ class CacheLoggingTests(TestCase):
         with self.assertLogs('waffle', level='WARNING') as cm:
             mock_cache = mock.MagicMock()
             mock_cache.set.side_effect = TimeoutError('cache down')
-            from waffle.utils import cache_set
             cache_set(mock_cache, 'test-key', 'test-value')
         assert any('Cache set failed' in msg for msg in cm.output)
 

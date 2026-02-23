@@ -2,7 +2,8 @@ from typing import TYPE_CHECKING, Any, Generic, TypeVar
 
 from django.db import models
 
-from waffle.utils import get_setting, get_cache, cache_delete
+from waffle.cache import cache_delete
+from waffle.utils import get_setting, get_cache
 
 
 if TYPE_CHECKING:
