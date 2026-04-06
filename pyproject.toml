@@ -53,6 +53,10 @@ namespaces = false
 [tool.setuptools.package-data]
 waffle = ["py.typed"]
 
+[tool.coverage.run]
+source = ["waffle"]
+omit = ["waffle/tests/*"]
+
 [tool.mypy]
 python_version = "3.9"
 exclude = "waffle/tests"
