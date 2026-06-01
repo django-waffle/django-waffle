@@ -65,6 +65,25 @@ class ModelsTests(TestCase):
             list(flags[0].users.all())
             list(flags[0].groups.all())
 
+    def test_flag_get_all_from_db_get_user_group_ids_no_extra_queries(self):
+        """_get_user_ids / _get_group_ids must use the prefetch cache, not re-query."""
+        Flag = get_waffle_flag_model()
+        flag = Flag.objects.create(name='test-flag')
+        user = User.objects.create_user(username='waffle-user')
+        group = Group.objects.create(name='waffle-group')
+        flag.users.add(user)
+        flag.groups.add(group)
+
+        flags = Flag.get_all_from_db()
+        self.assertEqual(len(flags), 1)
+
+        with self.assertNumQueries(0):
+            user_ids = flags[0]._get_user_ids()
+            group_ids = flags[0]._get_group_ids()
+
+        self.assertEqual(user_ids, {user.pk})
+        self.assertEqual(group_ids, {group.pk})
+
     def test_flag_get_all_prefetch_survives_cache(self):
         Flag = get_waffle_flag_model()
         flag = Flag.objects.create(name='test-flag')
@@ -81,8 +100,11 @@ class ModelsTests(TestCase):
         self.assertEqual(len(flags), 1)
 
         with self.assertNumQueries(0):
-            list(flags[0].users.all())
-            list(flags[0].groups.all())
+            user_ids = flags[0]._get_user_ids()
+            group_ids = flags[0]._get_group_ids()
+
+        self.assertEqual(user_ids, {user.pk})
+        self.assertEqual(group_ids, {group.pk})
 
     def test_switch_get_all_from_db_returns_list(self):
         Switch = get_waffle_switch_model()
