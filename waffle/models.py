@@ -90,11 +90,15 @@ class BaseModel(models.Model):
         return objs
 
     @classmethod
-    def get_all_from_db(cls: type[_BaseModelType]) -> list[_BaseModelType]:
+    def _get_all_queryset(cls: type[_BaseModelType]) -> models.QuerySet[_BaseModelType]:
         objects = cls.objects
         if get_setting('READ_FROM_WRITE_DB'):
             objects = objects.using(router.db_for_write(cls))
-        return list(objects.all())
+        return objects.all()
+
+    @classmethod
+    def get_all_from_db(cls: type[_BaseModelType]) -> list[_BaseModelType]:
+        return list(cls._get_all_queryset())
 
     def flush(self) -> None:
         cache = get_cache()
@@ -365,39 +369,32 @@ class AbstractUserFlag(AbstractBaseFlag):
         ])
         return flush_keys
 
-    def _get_user_ids(self) -> set[Any]:
+    @classmethod
+    def get_all_from_db(cls: type[_BaseModelType]) -> list[_BaseModelType]:
+        return list(cls._get_all_queryset().prefetch_related('users', 'groups'))
+
+    def _get_relation_ids(self, relation: Any, cache_key_setting: str) -> set[Any]:
         cache = get_cache()
-        cache_key = keyfmt(get_setting('FLAG_USERS_CACHE_KEY'), self.name)
+        cache_key = keyfmt(get_setting(cache_key_setting), self.name)
         cached = cache.get(cache_key)
         if cached == CACHE_EMPTY:
             return set()
         if cached:
             return cached
 
-        user_ids = set(self.users.all().values_list('pk', flat=True))
-        if not user_ids:
+        ids = {obj.pk for obj in relation.all()}
+        if not ids:
             cache.add(cache_key, CACHE_EMPTY)
             return set()
 
-        cache.add(cache_key, user_ids)
-        return user_ids
+        cache.add(cache_key, ids)
+        return ids
+
+    def _get_user_ids(self) -> set[Any]:
+        return self._get_relation_ids(self.users, 'FLAG_USERS_CACHE_KEY')
 
     def _get_group_ids(self) -> set[Any]:
-        cache = get_cache()
-        cache_key = keyfmt(get_setting('FLAG_GROUPS_CACHE_KEY'), self.name)
-        cached = cache.get(cache_key)
-        if cached == CACHE_EMPTY:
-            return set()
-        if cached:
-            return cached
-
-        group_ids = set(self.groups.all().values_list('pk', flat=True))
-        if not group_ids:
-            cache.add(cache_key, CACHE_EMPTY)
-            return set()
-
-        cache.add(cache_key, group_ids)
-        return group_ids
+        return self._get_relation_ids(self.groups, 'FLAG_GROUPS_CACHE_KEY')
 
     def is_active_for_user(self, user: AbstractBaseUser) -> bool | None:
         is_active = super().is_active_for_user(user)
