@@ -90,11 +90,15 @@ class BaseModel(models.Model):
         return objs
 
     @classmethod
-    def get_all_from_db(cls: type[_BaseModelType]) -> list[_BaseModelType]:
+    def _get_all_queryset(cls: type[_BaseModelType]) -> models.QuerySet[_BaseModelType]:
         objects = cls.objects
         if get_setting('READ_FROM_WRITE_DB'):
             objects = objects.using(router.db_for_write(cls))
-        return list(objects.all())
+        return objects.all()
+
+    @classmethod
+    def get_all_from_db(cls: type[_BaseModelType]) -> list[_BaseModelType]:
+        return list(cls._get_all_queryset())
 
     def flush(self) -> None:
         cache = get_cache()
@@ -364,6 +368,10 @@ class AbstractUserFlag(AbstractBaseFlag):
             keyfmt(get_setting('FLAG_GROUPS_CACHE_KEY'), self.name),
         ])
         return flush_keys
+
+    @classmethod
+    def get_all_from_db(cls: type[_BaseModelType]) -> list[_BaseModelType]:
+        return list(cls._get_all_queryset().prefetch_related('users', 'groups'))
 
     def _get_user_ids(self) -> set[Any]:
         cache = get_cache()
