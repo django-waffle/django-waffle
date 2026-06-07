@@ -352,6 +352,9 @@ class AbstractUserFlag(AbstractBaseFlag):
         verbose_name=_('Users'),
     )
 
+    _prefetched_user_ids: set | None = None
+    _prefetched_group_ids: set | None = None
+
     class Meta(AbstractBaseFlag.Meta):
         abstract = True
         verbose_name = _('Flag')
@@ -365,7 +368,36 @@ class AbstractUserFlag(AbstractBaseFlag):
         ])
         return flush_keys
 
+    @classmethod
+    def get_all(cls):
+        flags = super().get_all()
+        prefetched = cls._prefetch_user_group_ids(flags)
+        for flag in flags:
+            for attr, val in prefetched.get(flag.name, {}).items():
+                setattr(flag, attr, val)
+        return flags
+
+    @classmethod
+    def _prefetch_user_group_ids(cls, flags: list) -> dict[str, dict[str, set]]:
+        if not flags:
+            return {}
+        cache = get_cache()
+        user_key_fmt = get_setting('FLAG_USERS_CACHE_KEY')
+        group_key_fmt = get_setting('FLAG_GROUPS_CACHE_KEY')
+        user_keys = [keyfmt(user_key_fmt, f.name) for f in flags]
+        group_keys = [keyfmt(group_key_fmt, f.name) for f in flags]
+        cached = cache.get_many(user_keys + group_keys)
+        result: dict[str, dict[str, set]] = {}
+        for keys, attr in [(user_keys, '_prefetched_user_ids'), (group_keys, '_prefetched_group_ids')]:
+            for flag, key in zip(flags, keys):
+                if key in cached:
+                    val = cached[key]
+                    result.setdefault(flag.name, {})[attr] = set() if val == CACHE_EMPTY else val
+        return result
+
     def _get_user_ids(self) -> set[Any]:
+        if self._prefetched_user_ids is not None:
+            return self._prefetched_user_ids
         cache = get_cache()
         cache_key = keyfmt(get_setting('FLAG_USERS_CACHE_KEY'), self.name)
         cached = cache.get(cache_key)
@@ -383,6 +415,8 @@ class AbstractUserFlag(AbstractBaseFlag):
         return user_ids
 
     def _get_group_ids(self) -> set[Any]:
+        if self._prefetched_group_ids is not None:
+            return self._prefetched_group_ids
         cache = get_cache()
         cache_key = keyfmt(get_setting('FLAG_GROUPS_CACHE_KEY'), self.name)
         cached = cache.get(cache_key)
