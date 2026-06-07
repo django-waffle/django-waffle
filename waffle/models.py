@@ -65,11 +65,37 @@ class BaseModel(models.Model):
         return obj
 
     @classmethod
+    async def aget(cls: type[_BaseModelType], name: str) -> _BaseModelType:
+        cache = get_cache()
+        cache_key = cls._cache_key(name)
+        cached = await cache.aget(cache_key)
+        if cached == CACHE_EMPTY:
+            return cls(name=name)
+        if cached:
+            return cached
+
+        try:
+            obj = await cls.aget_from_db(name)
+        except cls.DoesNotExist:
+            await cache.aadd(cache_key, CACHE_EMPTY)
+            return cls(name=name)
+
+        await cache.aadd(cache_key, obj)
+        return obj
+
+    @classmethod
     def get_from_db(cls: type[_BaseModelType], name: str) -> _BaseModelType:
         objects = cls.objects
         if get_setting('READ_FROM_WRITE_DB'):
             objects = objects.using(router.db_for_write(cls))
         return objects.get(name=name)
+
+    @classmethod
+    async def aget_from_db(cls: type[_BaseModelType], name: str) -> _BaseModelType:
+        objects = cls.objects
+        if get_setting('READ_FROM_WRITE_DB'):
+            objects = objects.using(router.db_for_write(cls))
+        return await objects.aget(name=name)
 
     @classmethod
     def get_all(cls: type[_BaseModelType]) -> list[_BaseModelType]:
@@ -90,11 +116,36 @@ class BaseModel(models.Model):
         return objs
 
     @classmethod
+    async def aget_all(cls: type[_BaseModelType]) -> list[_BaseModelType]:
+        cache = get_cache()
+        cache_key = get_setting(cls.ALL_CACHE_KEY)
+        cached = await cache.aget(cache_key)
+        if cached == CACHE_EMPTY:
+            return []
+        if cached:
+            return cached
+
+        objs = await cls.aget_all_from_db()
+        if not objs:
+            await cache.aadd(cache_key, CACHE_EMPTY)
+            return []
+
+        await cache.aadd(cache_key, objs)
+        return objs
+
+    @classmethod
     def get_all_from_db(cls: type[_BaseModelType]) -> list[_BaseModelType]:
         objects = cls.objects
         if get_setting('READ_FROM_WRITE_DB'):
             objects = objects.using(router.db_for_write(cls))
         return list(objects.all())
+
+    @classmethod
+    async def aget_all_from_db(cls: type[_BaseModelType]) -> list[_BaseModelType]:
+        objects = cls.objects
+        if get_setting('READ_FROM_WRITE_DB'):
+            objects = objects.using(router.db_for_write(cls))
+        return [obj async for obj in objects.all()]
 
     def flush(self) -> None:
         cache = get_cache()
@@ -103,6 +154,14 @@ class BaseModel(models.Model):
             get_setting(self.ALL_CACHE_KEY),
         ]
         cache.delete_many(keys)
+
+    async def aflush(self) -> None:
+        cache = get_cache()
+        keys = [
+            self._cache_key(self.name),
+            get_setting(self.ALL_CACHE_KEY),
+        ]
+        await cache.adelete_many(keys)
 
     def save(self, *args: Any, **kwargs: Any) -> None:
         self.modified = timezone.now()
@@ -221,6 +280,11 @@ class AbstractBaseFlag(BaseModel):
         keys = self.get_flush_keys()
         cache.delete_many(keys)
 
+    async def aflush(self) -> None:
+        cache = get_cache()
+        keys = self.get_flush_keys()
+        await cache.adelete_many(keys)
+
     def get_flush_keys(self, flush_keys: list[str] | None = None) -> list[str]:
         flush_keys = flush_keys or []
         flush_keys.extend([
@@ -250,6 +314,16 @@ class AbstractBaseFlag(BaseModel):
         if user:
             return self.is_active_for_user(user)
         return False
+
+    async def _ais_active_for_user(self, request: HttpRequest) -> bool | None:
+        user = getattr(request, "user", None)
+        if user:
+            return await self.ais_active_for_user(user)
+        return False
+
+    async def ais_active_for_user(self, user: AbstractBaseUser) -> bool | None:
+        # Pure Python here, but often overridden with I/O-bound version, see e.g. AbstractUserFlag.
+        return self.is_active_for_user(user)
 
     def _is_active_for_language(self, request: HttpRequest) -> bool | None:
         if self.languages:
@@ -328,6 +402,62 @@ class AbstractBaseFlag(BaseModel):
             return active_for_language
 
         active_for_user = self._is_active_for_user(request)
+        if active_for_user is not None:
+            return active_for_user
+
+        active_for_percent = self._is_active_for_percent(request, read_only)
+        if active_for_percent is not None:
+            return active_for_percent
+
+        return False
+
+    async def ais_active(self, request: HttpRequest, read_only: bool = False) -> bool | None:
+        if not self.pk:
+            log_level = get_setting('LOG_MISSING_FLAGS')
+            if log_level:
+                logger.log(log_level, 'Flag %s not found', self.name)
+            if get_setting('CREATE_MISSING_FLAGS'):
+                flag, _created = await get_waffle_flag_model().objects.aget_or_create(
+                    name=self.name,
+                    defaults={
+                        'everyone': get_setting('FLAG_DEFAULT')
+                    }
+                )
+                cache = get_cache()
+                await cache.aset(self._cache_key(self.name), flag)
+
+            return get_setting('FLAG_DEFAULT')
+
+        if get_setting('OVERRIDE'):
+            if self.name in request.GET:
+                return request.GET[self.name] == '1'
+
+        if self.everyone:
+            return True
+        elif self.everyone is False:
+            return False
+
+        if self.testing:  # Testing mode is on.
+            tc = get_setting('TEST_COOKIE') % self.name
+            th = tc.replace('_', '-')
+            on = None
+            if tc in request.GET:
+                on = request.GET[tc] == '1'
+            elif th in request.headers:
+                on = request.headers[th] == '1'
+            if on is not None:
+                if not hasattr(request, 'waffle_tests'):
+                    request.waffle_tests = {}
+                request.waffle_tests[self.name] = on
+                return on
+            if tc in request.COOKIES:
+                return request.COOKIES[tc] == 'True'
+
+        active_for_language = self._is_active_for_language(request)
+        if active_for_language is not None:
+            return active_for_language
+
+        active_for_user = await self._ais_active_for_user(request)
         if active_for_user is not None:
             return active_for_user
 
@@ -451,6 +581,58 @@ class AbstractUserFlag(AbstractBaseFlag):
 
         return None
 
+    async def ais_active_for_user(self, user: AbstractBaseUser) -> bool | None:
+        is_active = super().is_active_for_user(user)
+        if is_active:
+            return is_active
+
+        user_ids = await self._aget_user_ids()
+        if hasattr(user, 'pk') and user.pk in user_ids:
+            return True
+
+        if hasattr(user, 'groups'):
+            group_ids = await self._aget_group_ids()
+            if group_ids:
+                user_groups = set([pk async for pk in user.groups.all().values_list('pk', flat=True)])
+                if group_ids.intersection(user_groups):
+                    return True
+
+        return None
+
+    async def _aget_user_ids(self) -> set[Any]:
+        cache = get_cache()
+        cache_key = keyfmt(get_setting('FLAG_USERS_CACHE_KEY'), self.name)
+        cached = await cache.aget(cache_key)
+        if cached == CACHE_EMPTY:
+            return set()
+        if cached:
+            return cached
+
+        user_ids = set([pk async for pk in self.users.all().values_list('pk', flat=True)])
+        if not user_ids:
+            await cache.aadd(cache_key, CACHE_EMPTY)
+            return set()
+
+        await cache.aadd(cache_key, user_ids)
+        return user_ids
+
+    async def _aget_group_ids(self) -> set[Any]:
+        cache = get_cache()
+        cache_key = keyfmt(get_setting('FLAG_GROUPS_CACHE_KEY'), self.name)
+        cached = await cache.aget(cache_key)
+        if cached == CACHE_EMPTY:
+            return set()
+        if cached:
+            return cached
+
+        group_ids = set([pk async for pk in self.groups.all().values_list('pk', flat=True)])
+        if not group_ids:
+            await cache.aadd(cache_key, CACHE_EMPTY)
+            return set()
+
+        await cache.aadd(cache_key, group_ids)
+        return group_ids
+
 
 class Flag(AbstractUserFlag):
     """A feature flag.
@@ -525,6 +707,22 @@ class AbstractBaseSwitch(BaseModel):
 
         return self.active
 
+    async def ais_active(self) -> bool:
+        if not self.pk:
+            log_level = get_setting('LOG_MISSING_SWITCHES')
+            if log_level:
+                logger.log(log_level, 'Switch %s not found', self.name)
+            if get_setting('CREATE_MISSING_SWITCHES'):
+                switch, _created = await get_waffle_switch_model().objects.aget_or_create(
+                    name=self.name, defaults={"active": get_setting("SWITCH_DEFAULT")}
+                )
+                cache = get_cache()
+                await cache.aset(self._cache_key(self.name), switch)
+
+            return get_setting('SWITCH_DEFAULT')
+
+        return self.active
+
 
 class AbstractBaseSample(BaseModel):
     """A sample of users.
@@ -588,6 +786,24 @@ class AbstractBaseSample(BaseModel):
                 )
                 cache = get_cache()
                 cache.set(self._cache_key(self.name), sample)
+
+            return get_setting('SAMPLE_DEFAULT')
+        return Decimal(str(random.uniform(0, 100))) <= self.percent
+
+    async def ais_active(self) -> bool:
+        if not self.pk:
+            log_level = get_setting('LOG_MISSING_SAMPLES')
+            if log_level:
+                logger.log(log_level, 'Sample %s not found', self.name)
+            if get_setting('CREATE_MISSING_SAMPLES'):
+
+                default_percent = 100 if get_setting('SAMPLE_DEFAULT') else 0
+
+                sample, _created = await get_waffle_sample_model().objects.aget_or_create(
+                    name=self.name, defaults={"percent": default_percent}
+                )
+                cache = get_cache()
+                await cache.aset(self._cache_key(self.name), sample)
 
             return get_setting('SAMPLE_DEFAULT')
         return Decimal(str(random.uniform(0, 100))) <= self.percent
