@@ -31,6 +31,7 @@ class Migration(migrations.Migration):
                 ('users', models.ManyToManyField(help_text='Activate this flag for these users.', to=settings.AUTH_USER_MODEL, blank=True)),
             ],
             options={
+                'swappable': 'WAFFLE_FLAG_MODEL',
             },
             bases=(models.Model,),
         ),
@@ -45,6 +46,7 @@ class Migration(migrations.Migration):
                 ('modified', models.DateTimeField(default=django.utils.timezone.now, help_text='Date when this Sample was last modified.')),
             ],
             options={
+                'swappable': 'WAFFLE_SAMPLE_MODEL',
             },
             bases=(models.Model,),
         ),
@@ -60,6 +62,7 @@ class Migration(migrations.Migration):
             ],
             options={
                 'verbose_name_plural': 'Switches',
+                'swappable': 'WAFFLE_SWITCH_MODEL',
             },
             bases=(models.Model,),
         ),
