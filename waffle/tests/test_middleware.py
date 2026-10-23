@@ -1,4 +1,4 @@
-from django.http import HttpResponse
+from django.http import HttpResponse, StreamingHttpResponse
 from django.test import RequestFactory
 
 from waffle.middleware import WaffleMiddleware
@@ -47,3 +47,12 @@ def test_testing_cookies():
         cookie = f'dwft_{k}'
         assert str(get.waffle_tests[k]) == resp.cookies[cookie].value
         assert not resp.cookies[cookie]['max-age']
+
+
+def test_streaming_response():
+    get.waffles = {'foo': [True, False]}
+    resp = StreamingHttpResponse(['content'])
+    resp = WaffleMiddleware().process_response(get, resp)
+    assert 'dwf_foo' in resp.cookies
+    assert resp.cookies['dwf_foo'].value == 'True'
+
