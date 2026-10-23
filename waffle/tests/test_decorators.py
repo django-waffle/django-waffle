@@ -1,4 +1,7 @@
+from django.http import StreamingHttpResponse
+
 from waffle import get_waffle_flag_model, get_waffle_switch_model
+from waffle.decorators import waffle_flag, waffle_switch
 from waffle.tests.base import TestCase
 
 
@@ -100,3 +103,26 @@ class DecoratorTests(TestCase):
         get_waffle_flag_model().objects.create(name='foo', everyone=True)
         resp = self.client.get('/flagged_view_with_invalid_redirect')
         self.assertEqual(200, resp.status_code)
+
+    def test_switch_with_streaming_http_response(self):
+        @waffle_switch('foo')
+        def view(request):
+            return StreamingHttpResponse([b'chunk1', b'chunk2'])
+
+        request = self.client.get('/switch-on').wsgi_request
+        get_waffle_switch_model().objects.create(name='foo', active=True)
+        resp = view(request)
+        self.assertIsInstance(resp, StreamingHttpResponse)
+        self.assertEqual(list(resp.streaming_content), [b'chunk1', b'chunk2'])
+
+    def test_flag_with_streaming_http_response(self):
+        @waffle_flag('foo')
+        def view(request):
+            return StreamingHttpResponse([b'chunk1', b'chunk2'])
+
+        request = self.client.get('/flag-on').wsgi_request
+        get_waffle_flag_model().objects.create(name='foo', everyone=True)
+        resp = view(request)
+        self.assertIsInstance(resp, StreamingHttpResponse)
+        self.assertEqual(list(resp.streaming_content), [b'chunk1', b'chunk2'])
+
