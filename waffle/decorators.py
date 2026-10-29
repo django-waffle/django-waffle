@@ -3,7 +3,12 @@ from __future__ import annotations
 from functools import wraps, WRAPPER_ASSIGNMENTS
 from typing import Any, Callable
 
-from django.http import Http404, HttpRequest, HttpResponse, HttpResponsePermanentRedirect, HttpResponseRedirect
+from django.http import (
+    Http404,
+    HttpResponseBase,
+    HttpResponsePermanentRedirect,
+    HttpResponseRedirect,
+)
 from django.shortcuts import redirect
 from django.urls import reverse, NoReverseMatch
 
@@ -12,8 +17,8 @@ from waffle import flag_is_active, switch_is_active
 
 def waffle_flag(
     flag_name: str, redirect_to: Callable | str | None = None,
-) -> Callable[[Callable[[HttpRequest], HttpResponse]], Callable[[HttpRequest], HttpResponse]]:
-    def decorator(view: Callable[[HttpRequest], HttpResponse]) -> Callable[[HttpRequest], HttpResponse]:
+) -> Callable[[Callable[..., HttpResponseBase]], Callable[..., HttpResponseBase]]:
+    def decorator(view: Callable[..., HttpResponseBase]) -> Callable[..., HttpResponseBase]:
         @wraps(view, assigned=WRAPPER_ASSIGNMENTS)
         def _wrapped_view(request, *args, **kwargs):
             if flag_name.startswith('!'):
@@ -35,8 +40,8 @@ def waffle_flag(
 
 def waffle_switch(
     switch_name: str, redirect_to: Callable | str | None = None,
-) -> Callable[[Callable[[HttpRequest], HttpResponse]], Callable[[HttpRequest], HttpResponse]]:
-    def decorator(view: Callable[[HttpRequest], HttpResponse]) -> Callable[[HttpRequest], HttpResponse]:
+) -> Callable[[Callable[..., HttpResponseBase]], Callable[..., HttpResponseBase]]:
+    def decorator(view: Callable[..., HttpResponseBase]) -> Callable[..., HttpResponseBase]:
         @wraps(view, assigned=WRAPPER_ASSIGNMENTS)
         def _wrapped_view(request, *args, **kwargs):
             if switch_name.startswith('!'):
