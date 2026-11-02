@@ -144,6 +144,7 @@ max-complexity = 23
 "docs/conf.py" = ["INP001"]
 "test_app/models.py" = ["DJ008"]  # FIXME
 "waffle/models.py" = ["DJ012", "PYI019"]  # FIXME
+"waffle/cache.py" = ["BLE001"]  # Catch Exceptions broadly for cache failover
 
 [tool.ruff.lint.pylint]
 allow-magic-value-types = ["float", "int", "str"]
