@@ -1,19 +1,22 @@
 from __future__ import annotations
 
 from functools import wraps, WRAPPER_ASSIGNMENTS
-from typing import Any, Callable
+from typing import Any, Callable, TypeVar
 
 from django.http import Http404, HttpRequest, HttpResponse, HttpResponsePermanentRedirect, HttpResponseRedirect
+from django.http.response import HttpResponseBase
 from django.shortcuts import redirect
 from django.urls import reverse, NoReverseMatch
 
 from waffle import flag_is_active, switch_is_active
 
+_ViewT = TypeVar("_ViewT", bound=Callable[..., HttpResponseBase])
+
 
 def waffle_flag(
     flag_name: str, redirect_to: Callable | str | None = None,
-) -> Callable[[Callable[[HttpRequest], HttpResponse]], Callable[[HttpRequest], HttpResponse]]:
-    def decorator(view: Callable[[HttpRequest], HttpResponse]) -> Callable[[HttpRequest], HttpResponse]:
+) -> Callable[[_ViewT], _ViewT]:
+    def decorator(view: _ViewT) -> _ViewT:
         @wraps(view, assigned=WRAPPER_ASSIGNMENTS)
         def _wrapped_view(request, *args, **kwargs):
             if flag_name.startswith('!'):
@@ -29,14 +32,14 @@ def waffle_flag(
                     raise Http404
 
             return view(request, *args, **kwargs)
-        return _wrapped_view
+        return _wrapped_view  # type: ignore[return-value]
     return decorator
 
 
 def waffle_switch(
     switch_name: str, redirect_to: Callable | str | None = None,
-) -> Callable[[Callable[[HttpRequest], HttpResponse]], Callable[[HttpRequest], HttpResponse]]:
-    def decorator(view: Callable[[HttpRequest], HttpResponse]) -> Callable[[HttpRequest], HttpResponse]:
+) -> Callable[[_ViewT], _ViewT]:
+    def decorator(view: _ViewT) -> _ViewT:
         @wraps(view, assigned=WRAPPER_ASSIGNMENTS)
         def _wrapped_view(request, *args, **kwargs):
             if switch_name.startswith('!'):
@@ -52,7 +55,7 @@ def waffle_switch(
                     raise Http404
 
             return view(request, *args, **kwargs)
-        return _wrapped_view
+        return _wrapped_view  # type: ignore[return-value]
     return decorator
 
 

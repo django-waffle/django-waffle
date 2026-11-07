@@ -1,4 +1,4 @@
-from django.http import HttpResponse
+from django.http import HttpResponse, StreamingHttpResponse
 from django.shortcuts import render
 from django.template.loader import render_to_string
 from django.views.generic import View
@@ -42,6 +42,11 @@ def switched_view(request):
     return HttpResponse('foo')
 
 
+@waffle_switch('foo')
+def switched_streaming_view(request):
+    return StreamingHttpResponse(['stream-', 'foo'])
+
+
 @waffle_switch('!foo')
 def switched_off_view(request):
     return HttpResponse('foo')
@@ -50,6 +55,11 @@ def switched_off_view(request):
 @waffle_flag('foo')
 def flagged_view(request):
     return HttpResponse('foo')
+
+
+@waffle_flag('foo')
+def flagged_streaming_view(request):
+    return StreamingHttpResponse(['stream-', 'foo'])
 
 
 @waffle_flag('!foo')
