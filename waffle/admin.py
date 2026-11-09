@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from django.contrib import admin
 from django.contrib.admin.models import LogEntry, CHANGE, DELETION
@@ -13,12 +13,20 @@ from django.utils.translation import gettext_lazy as _
 from waffle.models import Flag, Sample, Switch
 from waffle.utils import get_setting
 
+if TYPE_CHECKING:
+    from django.contrib.admin import ActionLocation  # Django 6.1+
+
 
 class BaseAdmin(admin.ModelAdmin):
     search_fields = ('name', 'note')
 
-    def get_actions(self, request: HttpRequest) -> dict[str, Any]:
-        actions = super().get_actions(request)
+    def get_actions(self, request: HttpRequest, action_location: ActionLocation | None = None) -> dict[str, Any]:
+        # Django 6.1 passes action_location (and warns about overrides without it);
+        # older versions never pass it and do not accept it.
+        if action_location is None:
+            actions = super().get_actions(request)
+        else:
+            actions = super().get_actions(request, action_location=action_location)
         if 'delete_selected' in actions:
             del actions['delete_selected']
         return actions

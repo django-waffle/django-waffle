@@ -1,7 +1,9 @@
 from unittest import mock
 import unittest
+import warnings
 
 import django
+from django.contrib import admin
 from django.contrib.admin.models import LogEntry, CHANGE, DELETION
 from django.contrib.admin.sites import AdminSite
 from django.contrib.auth import get_user_model
@@ -110,6 +112,27 @@ class FlagAdminTests(TestCase):
         actions = self.flag_admin.get_actions(request)
 
         self.assertEqual(actions.keys(), {"delete_individually"})
+
+    def test_get_action_choices_does_not_warn(self):
+        # Django 6.1 warns when get_actions() is overridden without action_location.
+        request = FakeRequest()
+        request.user.user_permissions.add(Permission.objects.get(codename="change_flag"))
+        with warnings.catch_warnings():
+            warnings.simplefilter("error")
+            choices = self.flag_admin.get_action_choices(request)
+
+        self.assertEqual({name for name, description in choices[1:]}, {"enable_for_all", "disable_for_all"})
+
+    @unittest.skipIf(django_version < (6, 1), "Action locations were added in Django 6.1")
+    def test_get_actions_honours_action_location(self):
+        action_location = admin.ActionLocation
+        request = FakeRequest()
+        request.user.user_permissions.add(Permission.objects.get(codename="change_flag"))
+        change_list_actions = self.flag_admin.get_actions(request, action_location=action_location.CHANGE_LIST)
+        change_form_actions = self.flag_admin.get_actions(request, action_location=action_location.CHANGE_FORM)
+
+        self.assertEqual(change_list_actions.keys(), {"enable_for_all", "disable_for_all"})
+        self.assertEqual(change_form_actions, {})
 
     def test_model_can_be_registered_by_default(self):
         config = get_setting("ENABLE_ADMIN_PAGES")
