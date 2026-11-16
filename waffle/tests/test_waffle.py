@@ -165,6 +165,22 @@ class WaffleTests(TestCase):
         response = process_request(request, views.flag_in_view)
         self.assertEqual(b'off', response.content)
 
+    def test_user_signal_clear(self):
+        """Test the per-user switch cache with clear."""
+        user = get_user_model().objects.create(username='foo')
+        flag = waffle.get_waffle_flag_model().objects.create(name='myflag')
+        flag.users.add(user)
+
+        request = get()
+        request.user = user
+        response = process_request(request, views.flag_in_view)
+        self.assertEqual(b'on', response.content)
+
+        # Unsetting the flag on a user should have an effect.
+        flag.users.clear()
+        response = process_request(request, views.flag_in_view)
+        self.assertEqual(b'off', response.content)
+
     def test_remove_from_user(self):
         """Same operation of `test_user` but performed with reverse relation"""
         user = get_user_model().objects.create(username='foo')
@@ -212,6 +228,25 @@ class WaffleTests(TestCase):
         # Unsetting the flag on a group should have an effect.
         flag.groups.remove(group)
         request.user = user
+        response = process_request(request, views.flag_in_view)
+        self.assertEqual(b'off', response.content)
+
+    def test_group_signal_clear(self):
+        """Test the per-group switch cache update when using clear."""
+        group = Group.objects.create(name='foo')
+        user = get_user_model().objects.create(username='bar')
+        user.groups.add(group)
+
+        flag = waffle.get_waffle_flag_model().objects.create(name='myflag')
+        flag.groups.add(group)
+
+        request = get()
+        request.user = user
+        response = process_request(request, views.flag_in_view)
+        self.assertEqual(b'on', response.content)
+
+        # Unsetting the flag on a group should have an effect.
+        flag.groups.clear()
         response = process_request(request, views.flag_in_view)
         self.assertEqual(b'off', response.content)
 

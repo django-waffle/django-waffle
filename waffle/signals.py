@@ -7,7 +7,7 @@ from waffle import get_waffle_flag_model
 @receiver(m2m_changed, sender=get_waffle_flag_model().users.through)
 @receiver(m2m_changed, sender=get_waffle_flag_model().groups.through)
 def flag_membership_changed(sender, instance, action, **kwargs):
-    if action in ('post_add', 'post_remove'):
+    if action in ('post_add', 'post_remove', 'post_clear'):
         flag_model = get_waffle_flag_model()
 
         # instance could be a flag or an instance of the related model
