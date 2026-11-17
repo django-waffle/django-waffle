@@ -90,11 +90,15 @@ class BaseModel(models.Model):
         return objs
 
     @classmethod
-    def get_all_from_db(cls: type[_BaseModelType]) -> list[_BaseModelType]:
+    def _get_all_queryset(cls: type[_BaseModelType]) -> models.QuerySet[_BaseModelType]:
         objects = cls.objects
         if get_setting('READ_FROM_WRITE_DB'):
             objects = objects.using(router.db_for_write(cls))
-        return list(objects.all())
+        return objects.all()
+
+    @classmethod
+    def get_all_from_db(cls: type[_BaseModelType]) -> list[_BaseModelType]:
+        return list(cls._get_all_queryset())
 
     def flush(self) -> None:
         cache = get_cache()
@@ -369,69 +373,55 @@ class AbstractUserFlag(AbstractBaseFlag):
         return flush_keys
 
     @classmethod
+    def _get_all_queryset(cls: type[_BaseModelType]) -> models.QuerySet[_BaseModelType]:
+        return super()._get_all_queryset().prefetch_related('users', 'groups')
+
+    @classmethod
     def get_all(cls):
         flags = super().get_all()
-        prefetched = cls._prefetch_user_group_ids(flags)
-        for flag in flags:
-            for attr, val in prefetched.get(flag.name, {}).items():
-                setattr(flag, attr, val)
+        cls._prefetch_user_group_ids(flags)
         return flags
 
     @classmethod
-    def _prefetch_user_group_ids(cls, flags: list) -> dict[str, dict[str, set]]:
+    def _prefetch_user_group_ids(cls, flags: list) -> None:
         if not flags:
-            return {}
+            return
         cache = get_cache()
-        user_key_fmt = get_setting('FLAG_USERS_CACHE_KEY')
-        group_key_fmt = get_setting('FLAG_GROUPS_CACHE_KEY')
-        user_keys = [keyfmt(user_key_fmt, f.name) for f in flags]
-        group_keys = [keyfmt(group_key_fmt, f.name) for f in flags]
+        user_keys = [keyfmt(get_setting('FLAG_USERS_CACHE_KEY'), f.name) for f in flags]
+        group_keys = [keyfmt(get_setting('FLAG_GROUPS_CACHE_KEY'), f.name) for f in flags]
         cached = cache.get_many(user_keys + group_keys)
-        result: dict[str, dict[str, set]] = {}
         for keys, attr in [(user_keys, '_prefetched_user_ids'), (group_keys, '_prefetched_group_ids')]:
             for flag, key in zip(flags, keys):
                 if key in cached:
                     val = cached[key]
-                    result.setdefault(flag.name, {})[attr] = set() if val == CACHE_EMPTY else val
-        return result
+                    setattr(flag, attr, set() if val == CACHE_EMPTY else val)
+
+    def _get_relation_ids(self, relation: Any, cache_key_setting: str) -> set[Any]:
+        cache = get_cache()
+        cache_key = keyfmt(get_setting(cache_key_setting), self.name)
+        cached = cache.get(cache_key)
+        if cached == CACHE_EMPTY:
+            return set()
+        if cached:
+            return cached
+
+        ids = {obj.pk for obj in relation.all()}
+        if not ids:
+            cache.add(cache_key, CACHE_EMPTY)
+            return set()
+
+        cache.add(cache_key, ids)
+        return ids
 
     def _get_user_ids(self) -> set[Any]:
         if self._prefetched_user_ids is not None:
             return self._prefetched_user_ids
-        cache = get_cache()
-        cache_key = keyfmt(get_setting('FLAG_USERS_CACHE_KEY'), self.name)
-        cached = cache.get(cache_key)
-        if cached == CACHE_EMPTY:
-            return set()
-        if cached:
-            return cached
-
-        user_ids = set(self.users.all().values_list('pk', flat=True))
-        if not user_ids:
-            cache.add(cache_key, CACHE_EMPTY)
-            return set()
-
-        cache.add(cache_key, user_ids)
-        return user_ids
+        return self._get_relation_ids(self.users, 'FLAG_USERS_CACHE_KEY')
 
     def _get_group_ids(self) -> set[Any]:
         if self._prefetched_group_ids is not None:
             return self._prefetched_group_ids
-        cache = get_cache()
-        cache_key = keyfmt(get_setting('FLAG_GROUPS_CACHE_KEY'), self.name)
-        cached = cache.get(cache_key)
-        if cached == CACHE_EMPTY:
-            return set()
-        if cached:
-            return cached
-
-        group_ids = set(self.groups.all().values_list('pk', flat=True))
-        if not group_ids:
-            cache.add(cache_key, CACHE_EMPTY)
-            return set()
-
-        cache.add(cache_key, group_ids)
-        return group_ids
+        return self._get_relation_ids(self.groups, 'FLAG_GROUPS_CACHE_KEY')
 
     def is_active_for_user(self, user: AbstractBaseUser) -> bool | None:
         is_active = super().is_active_for_user(user)
