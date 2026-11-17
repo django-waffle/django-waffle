@@ -6,6 +6,7 @@ from django.contrib import admin
 from django.contrib.admin.models import LogEntry, CHANGE, DELETION
 from django.contrib.admin.widgets import ManyToManyRawIdWidget
 from django.contrib.contenttypes.models import ContentType
+from django.core.exceptions import ValidationError
 from django.http import HttpRequest
 from django.utils.html import escape
 from django.utils.translation import gettext_lazy as _
@@ -76,16 +77,26 @@ class InformativeManyToManyRawIdWidget(ManyToManyRawIdWidget):
     input field. This widget works with all models that have a "name" field.
     """
     def label_and_url_for_value(self, values: Any) -> tuple[str, str]:
-        names = []
-        key = self.rel.get_related_field().name
+        field = self.rel.get_related_field()
+        clean_values = []
         for value in values:
             try:
-                name = self.rel.model._default_manager \
-                    .using(self.db) \
-                    .get(**{key: value})
-                names.append(escape(str(name)))
-            except self.rel.model.DoesNotExist:
-                names.append('<missing>')
+                clean_values.append(field.clean(value, None))
+            except ValidationError:
+                clean_values.append(None)
+
+        objects_dict = (
+            self.rel.model._default_manager
+                .using(self.db)
+                .in_bulk(clean_values, field_name=field.name)
+        )
+
+        names = []
+        for value in clean_values:
+            if value in objects_dict:
+                names.append(escape(str(objects_dict[value])))
+            else:
+                names.append("<missing>")
         return "(" + ", ".join(names) + ")", ""
 
 
