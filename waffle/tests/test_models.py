@@ -108,17 +108,44 @@ class GetAllPrefetchTests(TestCase):
         self.assertEqual(user_result, {42, 99})
         self.assertEqual(group_result, {7})
 
-    def test_prefetch_empty_cache_skips_attribute(self):
-        """When a flag's user/group keys are absent from cache, no prefetch attribute is set."""
+    def test_prefetch_warms_cold_cache_with_single_set_many(self):
+        """Cold user/group keys are warmed via one set_many(), not per-flag adds."""
         Flag = get_waffle_flag_model()
-        Flag.objects.create(name='flag-e')
+        user = User.objects.create_user(username='bob')
+        group = Group.objects.create(name='writers')
+        flag_a = Flag.objects.create(name='flag-e')
+        flag_a.users.add(user)
+        flag_a.groups.add(group)
+        Flag.objects.create(name='flag-g')  # no users/groups
 
-        # Don't prime the cache — keys are absent.
+        # Don't prime the per-flag caches — keys are absent.
         cache = get_cache()
         cache.clear()
 
-        flags = Flag.get_all()
-        self.assertEqual(len(flags), 1)
+        with mock.patch.object(cache, 'set_many', wraps=cache.set_many) as set_spy:
+            flags = Flag.get_all()
+            self.assertEqual(set_spy.call_count, 1)
+
+        flags = {f.name: f for f in flags}
+        self.assertEqual(flags['flag-e']._prefetched_user_ids, {user.pk})
+        self.assertEqual(flags['flag-e']._prefetched_group_ids, {group.pk})
+        # A flag with no members warms to an empty set (CACHE_EMPTY in cache).
+        self.assertEqual(flags['flag-g']._prefetched_user_ids, set())
+        self.assertEqual(flags['flag-g']._prefetched_group_ids, set())
+        self.assertEqual(cache.get(self._user_cache_key('flag-g')), CACHE_EMPTY)
+
+    def test_prefetch_skips_warming_flags_with_everyone_set(self):
+        """Flags with `everyone` set never need membership ids, so they aren't warmed."""
+        Flag = get_waffle_flag_model()
+        Flag.objects.create(name='flag-everyone', everyone=True)
+
+        cache = get_cache()
+        cache.clear()
+
+        with mock.patch.object(cache, 'set_many', wraps=cache.set_many) as set_spy:
+            flags = Flag.get_all()
+            set_spy.assert_not_called()
+
         self.assertIsNone(flags[0]._prefetched_user_ids)
         self.assertIsNone(flags[0]._prefetched_group_ids)
 

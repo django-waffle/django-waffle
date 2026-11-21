@@ -388,11 +388,23 @@ class AbstractUserFlag(AbstractBaseFlag):
         group_keys = [keyfmt(group_key_fmt, f.name) for f in flags]
         cached = cache.get_many(user_keys + group_keys)
         result: dict[str, dict[str, set]] = {}
-        for keys, attr in [(user_keys, '_prefetched_user_ids'), (group_keys, '_prefetched_group_ids')]:
+        to_cache: dict[str, Any] = {}
+        for keys, attr, relation in [
+            (user_keys, '_prefetched_user_ids', 'users'),
+            (group_keys, '_prefetched_group_ids', 'groups'),
+        ]:
             for flag, key in zip(flags, keys):
                 if key in cached:
                     val = cached[key]
                     result.setdefault(flag.name, {})[attr] = set() if val == CACHE_EMPTY else val
+                elif flag.everyone is None:
+                    # everyone True/False short-circuits is_active before the
+                    # membership check, so only warm flags where it's unset.
+                    ids = set(getattr(flag, relation).all().values_list('pk', flat=True))
+                    result.setdefault(flag.name, {})[attr] = ids
+                    to_cache[key] = ids if ids else CACHE_EMPTY
+        if to_cache:
+            cache.set_many(to_cache)
         return result
 
     def _get_user_ids(self) -> set[Any]:
