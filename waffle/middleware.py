@@ -1,4 +1,4 @@
-from django.http import HttpRequest, HttpResponse
+from django.http import HttpRequest, HttpResponse, HttpResponseBase
 from django.utils.deprecation import MiddlewareMixin
 from django.utils.encoding import smart_str
 
@@ -6,7 +6,7 @@ from waffle.utils import get_setting
 
 
 class WaffleMiddleware(MiddlewareMixin):
-    def process_response(self, request: HttpRequest, response: HttpResponse) -> HttpResponse:
+    def process_response(self, request: HttpRequest, response: HttpResponseBase) -> HttpResponseBase:
         secure = get_setting('SECURE')
         max_age = get_setting('MAX_AGE')
 
