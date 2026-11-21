@@ -295,8 +295,9 @@ class AbstractBaseFlag(BaseModel):
                 )
                 cache = get_cache()
                 cache.set(self._cache_key(self.name), flag)
-
-            return get_setting('FLAG_DEFAULT')
+                self = flag  # noqa PLW0642
+            else:
+                self.everyone = get_setting('FLAG_DEFAULT')
 
         if get_setting('OVERRIDE'):
             if self.name in request.GET:
