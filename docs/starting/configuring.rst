@@ -121,3 +121,11 @@ behavior.
 ``WAFFLE_ENABLE_ADMIN_PAGES``
     Enables the default admin pages for Waffle models. This is True by default,
     but can be disabled to override or customize the pages.
+
+``WAFFLE_CACHE_FAILOVER``
+    Whether to failover to the database in the event of an exception trying
+    to perform a cache operation. Defaults to ``True``.
+
+``WAFFLE_CACHE_RETRIES``
+    Number of retry attempts after a failed cache operation, before failing
+    over to the database. Defaults to ``0``.
