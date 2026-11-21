@@ -19,14 +19,29 @@ def flag_is_active(request: HttpRequest, flag_name: str, read_only: bool = False
     return flag.is_active(request, read_only=read_only)
 
 
+async def aflag_is_active(request: HttpRequest, flag_name: str, read_only: bool = False) -> bool | None:
+    flag = await get_waffle_flag_model().aget(flag_name)
+    return await flag.ais_active(request, read_only=read_only)
+
+
 def switch_is_active(switch_name: str) -> bool:
     switch = get_waffle_switch_model().get(switch_name)
     return switch.is_active()
 
 
+async def aswitch_is_active(switch_name: str) -> bool:
+    switch = await get_waffle_switch_model().aget(switch_name)
+    return await switch.ais_active()
+
+
 def sample_is_active(sample_name: str) -> bool:
     sample = get_waffle_sample_model().get(sample_name)
     return sample.is_active()
+
+
+async def asample_is_active(sample_name: str) -> bool:
+    sample = await get_waffle_sample_model().aget(sample_name)
+    return await sample.ais_active()
 
 
 def get_waffle_flag_model() -> type[AbstractBaseFlag]:
