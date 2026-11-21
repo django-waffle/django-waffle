@@ -24,6 +24,22 @@ class DecoratorTests(TestCase):
         resp = self.client.get('/switch-on')
         self.assertEqual(200, resp.status_code)
 
+    def test_switch_streaming_response(self):
+        resp = self.client.get('/switch-streaming')
+        self.assertEqual(404, resp.status_code)
+        get_waffle_switch_model().objects.create(name='foo', active=True)
+        resp = self.client.get('/switch-streaming')
+        self.assertEqual(200, resp.status_code)
+        self.assertEqual(b'stream-foo', b''.join(resp.streaming_content))
+
+    def test_flag_streaming_response(self):
+        resp = self.client.get('/flag-streaming')
+        self.assertEqual(404, resp.status_code)
+        get_waffle_flag_model().objects.create(name='foo', everyone=True)
+        resp = self.client.get('/flag-streaming')
+        self.assertEqual(200, resp.status_code)
+        self.assertEqual(b'stream-foo', b''.join(resp.streaming_content))
+
     def test_switch_must_be_inactive(self):
         resp = self.client.get('/switch-off')
         self.assertEqual(200, resp.status_code)
