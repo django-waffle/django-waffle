@@ -40,4 +40,23 @@
   sample_var off
 {% endsample %}
 
+{% flag_is_active "flag" request True as is_flag_active %}
+{% if is_flag_active %}
+  flag_is_active on
+{% else %}
+  flag_is_active off
+{% endif %}
+
+{% if "switch"|switch_is_active %}
+  switch_is_active on
+{% else %}
+  switch_is_active off
+{% endif %}
+
+{% if "sample"|sample_is_active %}
+  sample_is_active on
+{% else %}
+  sample_is_active off
+{% endif %}
+
 {% wafflejs %}

@@ -67,6 +67,51 @@ Samples
     {% endsample %}
 
 
+Django Template Filters and Tags
+================================
+Django Waffle provides three new Django Template tags and filters, ``flag_is_active``,
+``switch_is_active``, and ``sample_is_active``. Each of these tags and filters can be used in Django
+template's if statement contitions to check if a flag, switch, or sample is active.
+
+This is useful for when a django template context variable and a flag, switch, or sample are required to
+be active in order to render a certain part of the template.
+
+flag_is_active
+--------------
+
+::
+
+    {% flag_is_active "flag" request True as is_flag_active %}
+    {% if is_flag_active %}
+        flag_is_active on
+    {% else %}
+        flag_is_active off
+    {% endif %}
+
+switch_is_active
+----------------
+
+::
+
+    {% if "switch"|switch_is_active %}
+        switch_is_active on
+    {% else %}
+        switch_is_active off
+    {% endif %}
+
+sample_is_active
+----------------
+
+::
+
+    {% if "sample"|sample_is_active %}
+        sample_is_active on
+    {% else %}
+        sample_is_active off
+    {% endif %}
+
+
+
 .. _templates-jinja:
 
 Jinja Templates
