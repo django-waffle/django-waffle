@@ -1,5 +1,5 @@
 from django.http import HttpResponse
-from django.test import RequestFactory
+from django.test import RequestFactory, SimpleTestCase, override_settings
 
 from waffle.middleware import WaffleMiddleware
 
@@ -47,3 +47,20 @@ def test_testing_cookies():
         cookie = f'dwft_{k}'
         assert str(get.waffle_tests[k]) == resp.cookies[cookie].value
         assert not resp.cookies[cookie]['max-age']
+
+
+class TestCookieSecureTests(SimpleTestCase):
+    def process(self):
+        request = RequestFactory().get('/foo')
+        request.waffle_tests = {'foo': True}
+        return WaffleMiddleware(lambda r: HttpResponse()).process_response(
+            request, HttpResponse())
+
+    def test_testing_cookie_secure_by_default(self):
+        resp = self.process()
+        assert resp.cookies['dwft_foo']['secure'] is True
+
+    @override_settings(WAFFLE_SECURE=False)
+    def test_testing_cookie_secure_opt_out(self):
+        resp = self.process()
+        assert not resp.cookies['dwft_foo']['secure']

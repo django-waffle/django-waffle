@@ -25,6 +25,6 @@ class WaffleMiddleware(MiddlewareMixin):
             for k in request.waffle_tests:
                 name = smart_str(get_setting('TEST_COOKIE') % k)
                 value = request.waffle_tests[k]
-                response.set_cookie(name, value=value)
+                response.set_cookie(name, value=value, secure=secure)
 
         return response
