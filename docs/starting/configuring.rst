@@ -74,6 +74,9 @@ behavior.
 ``WAFFLE_SECURE``
     Whether to set the ``secure`` flag on cookies. Defaults to ``True``.
 
+``WAFFLE_COOKIE_HTTPONLY``
+    Whether to set the ``httponly`` flag on cookies. Defaults to ``True``.
+
 ``WAFFLE_CACHE_PREFIX``
     Waffle tries to store objects in cache pretty aggressively. If you
     ever upgrade and change the shape of the objects (for example
