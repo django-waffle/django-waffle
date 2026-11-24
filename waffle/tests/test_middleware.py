@@ -1,5 +1,5 @@
 from django.http import HttpResponse
-from django.test import RequestFactory
+from django.test import RequestFactory, SimpleTestCase, override_settings
 
 from waffle.middleware import WaffleMiddleware
 
@@ -47,3 +47,30 @@ def test_testing_cookies():
         cookie = f'dwft_{k}'
         assert str(get.waffle_tests[k]) == resp.cookies[cookie].value
         assert not resp.cookies[cookie]['max-age']
+
+
+class HttpOnlyCookieTests(SimpleTestCase):
+    def process(self):
+        request = RequestFactory().get('/foo')
+        request.waffles = {'foo': [True, False]}
+        request.waffle_tests = {'bar': True}
+        return WaffleMiddleware(lambda r: HttpResponse()).process_response(
+            request, HttpResponse())
+
+    def test_httponly_by_default(self):
+        resp = self.process()
+        assert resp.cookies['dwf_foo']['httponly'] is True
+        assert resp.cookies['dwft_bar']['httponly'] is True
+
+    @override_settings(WAFFLE_COOKIE_HTTPONLY=False)
+    def test_httponly_opt_out(self):
+        resp = self.process()
+        assert not resp.cookies['dwf_foo']['httponly']
+        assert not resp.cookies['dwft_bar']['httponly']
+        assert resp.cookies['dwf_foo']['secure'] is True
+
+    @override_settings(WAFFLE_SECURE=False)
+    def test_secure_independent_of_httponly(self):
+        resp = self.process()
+        assert not resp.cookies['dwf_foo']['secure']
+        assert resp.cookies['dwf_foo']['httponly'] is True

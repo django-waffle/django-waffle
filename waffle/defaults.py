@@ -1,6 +1,7 @@
 COOKIE = 'dwf_%s'
 TEST_COOKIE = 'dwft_%s'
 SECURE = True
+COOKIE_HTTPONLY = True
 MAX_AGE = 2592000  # 1 month in seconds
 
 CACHE_PREFIX = 'waffle:'
